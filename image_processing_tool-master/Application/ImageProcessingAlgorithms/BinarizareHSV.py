@@ -5,10 +5,10 @@ import numpy as np
 import cv2
 
 @RegisterAlgorithm("Binarizare HSV", "Tema2",fromMainModel=["rightClickLastPositions"])
-@InputDialog(threshold=float)
+@InputDialog(threshold=float,lightThreshold=int)
 #@OutputDialog(title="Binarization Output")
 
-def AbordareNevectorizata(image,rightClickLastPositions,threshold):
+def BinarizareHSV(image,rightClickLastPositions,threshold,lightThreshold):
     if(len(rightClickLastPositions)!=1):
         return {
             'outputMessage':'Pls select just a single referece color'
@@ -39,10 +39,11 @@ def AbordareNevectorizata(image,rightClickLastPositions,threshold):
                     h[line,col]=60*(((red[line,col]-green[line,col])/c[line,col])+4)
     h=np.round(h)
 
+    lightThreshold/=100.0
     refColor = h[rightClickLastPositions[0].y,rightClickLastPositions[0].x]
     refLight = v[rightClickLastPositions[0].y,rightClickLastPositions[0].x]
     if np.isnan(refColor):
-        image=np.where(np.logical_and(np.isnan(h),refLight==v),255,0)
+        image=np.where(np.logical_and(np.isnan(h),abs(refLight-v)<=lightThreshold),255,0)
     else:
         image=np.where((abs(h-refColor)%(360-threshold))<=threshold,255,0)
     image=np.array(image,dtype='uint8')
