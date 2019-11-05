@@ -2,11 +2,10 @@ from Application.Utils.AlgorithmDecorators import RegisterAlgorithm
 from Application.Utils.InputDecorators import InputDialog
 from Application.Utils.OutputDecorators import OutputDialog
 import numpy as np
-import cv2
 
 @RegisterAlgorithm("Binarizare HSV", "Tema2",fromMainModel=["rightClickLastPositions"])
 @InputDialog(threshold=float,lightThreshold=int)
-#@OutputDialog(title="Binarization Output")
+@OutputDialog(title="BinarizationHSV Output")
 
 def BinarizareHSV(image,rightClickLastPositions,threshold,lightThreshold):
     if(len(rightClickLastPositions)!=1):
@@ -26,7 +25,7 @@ def BinarizareHSV(image,rightClickLastPositions,threshold,lightThreshold):
     s=np.array(max,dtype='float')
     for line in range(0,max.shape[0]):
         for col in range(0,max.shape[1]):
-            if c[line,col]==0:
+            if c[line,col]<0.03:
                 h[line,col]=np.nan
                 s[line, col] =0
             else :
@@ -52,51 +51,6 @@ def BinarizareHSV(image,rightClickLastPositions,threshold,lightThreshold):
         'processedImage': image
     }
 
-def hsv_to_rgb(h,s,v):
-    c=v*s
-    h=h/60.0
-    x=c*(1-np.abs(h % 2-1))
-    m=v-c
-    r=v
-    g=v
-    b=v
-    for line in range(0,m.shape[0]):
-        for col in range(0,m.shape[1]):
-            if np.isnan(h[line,col]):
-                r[line,col]=0
-                g[line,col]=0
-                b[line,col]=0
-            elif h[line,col]>=0 and h[line,col]<1:
-                r[line,col]=c[line,col]
-                g[line,col]=x[line,col]
-                b[line,col]=0
-            elif h[line,col]>=1 and h[line,col]<2:
-                r[line,col]=x[line,col]
-                g[line,col]=c[line,col]
-                b[line,col]=0
-            elif h[line, col] >= 2 and h[line, col] < 3:
-                r[line, col] = 0
-                g[line, col] = c[line, col]
-                b[line, col] = x[line,col]
-            elif h[line,col]>=3 and h[line,col]<4:
-                r[line,col]=0
-                g[line,col]=x[line,col]
-                b[line,col]=c[line,col]
-            elif h[line,col]>=4 and h[line,col]<5:
-                r[line,col]=x[line,col]
-                g[line,col]=0
-                b[line,col]=c[line,col]
-            elif h[line,col]>=5 and h[line,col]<6:
-                r[line,col]=c[line,col]
-                g[line,col]=0
-                b[line,col]=x[line,col]
-    r+=m
-    g+=m
-    b+=m
-    R=r*255
-    G=g*255
-    B=b*255
-    print(np.dstack((r,g,b)))
-    return np.dstack((R,G,B))
+
 
 
