@@ -1,0 +1,37 @@
+def BinarizareHSV(image,threshold):
+    image=image/255.0
+    min=image.min(axis=2)
+    max=image.max(axis=2)
+    red=image[:,:,0]
+    green=image[:,:,1]
+    blue=image[:,:,2]
+    c=max-min
+    v=max
+    state =np.where(c==0,0,c)
+    state2 =np.array(list(zip(np.where(max==red))))
+    state3 = np.array(list(zip(np.where(max == green))))
+    state4 = np.array(list(zip(np.where(max == blue))))
+
+    return {
+        'processedImage':image
+    }
+
+
+    for i in range(gradient.shape[0]):
+        for j in range (gradient.shape[1]):
+            if (directia[i,j]==1):
+                vecinFata=gradient[i,j+1]
+                vecinSpate=gradient[i,j-1]
+            elif(directia[i,j]==2):
+                vecinFata=gradient[i+1,j-1]
+                vecinSpate=gradient[i-1,j+1]
+            elif(directia[i,j]==3):
+                vecinFata=gradient[i+1,j+1]
+                vecinSpate=gradient[i-1,j-1]
+            elif(directia[i,j]==4):
+                vecinFata=gradient[i+1,j]
+                vecinSpate=gradient[i-1,j]
+            if(gradient[i,j]>vecinSpate and gradient[i,j]>vecinFata):
+                conturImage[i,j]=255
+            else:
+                conturImage[i,j]=0

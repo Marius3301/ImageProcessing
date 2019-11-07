@@ -17,6 +17,7 @@ def filtruGauss(image,sigma):
     j=np.ones((matSize,matSize))
     j*=index
     i=np.rot90(j,3)
+    print(i)
     maska=np.where(True,(1/(2*np.pi*np.power(sigma,2)))*np.power(math.e,-(np.power(i,2)+np.power(j,2)/(2*np.power(sigma,2)))),0)
     maska*=(1/maska.sum())
     print(len(image.shape))
