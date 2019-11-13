@@ -23,8 +23,9 @@ def canny(image,tMin,tMax):
     maskafy=ndimage.filters.convolve(image,fy, mode='constant', cval=0.0)
 
     gradient=np.hypot(maskafx,maskafy)
+    print(maskafx[39,560],maskafy[39,560])
     grade=np.arctan2(maskafy,maskafx)
-    ndimage.filters.maximum_filter
+    print(gradient[39,560])
     directia=detDirection(grade)
     imagineSubtiata=subtiere(gradient,directia)
     imagineSubtiata = np.where(imagineSubtiata >= tMax, 255, imagineSubtiata)
@@ -38,7 +39,7 @@ def canny(image,tMin,tMax):
     dreapta_stanga=parcurgereDS(dreapta_stanga,tMin,tMax)
     jos_sus=parcurgereJS(jos_sus,tMin,tMax)
     imagine=sus_jos+stanga_dreapta+dreapta_stanga+jos_sus
-
+    #print(imagine.max())
     return {
         'processedImage': imagine.astype('uint8')
     }
@@ -164,39 +165,41 @@ def subtiere(gradient,directia):
     maskaOrizontala=np.ones(5).reshape((5,1))
     maskaOrizontala=np.ones(5).reshape((1,5))
     maskaDiagonalaDreapta=np.array([[],[],[],[],[]])
-    for i in range(gradient.shape[0]-1):
-        for j in range (gradient.shape[1]-1):
+    for y in range(gradient.shape[0]-1):
+        for x in range (gradient.shape[1]-1):
             #vecinSpate = 255
             #vecinFata = 255
             #orizontal
-            if (directia[i,j]==1):
-                vecinFata=gradient[i,j-1]
-                vecinSpate=gradient[i,j+1]
+            if (directia[y,x]==1):
+                vecinFata=gradient[y,x-1]
+                vecinSpate=gradient[y,x+1]
             #digonala dreapta
-            elif(directia[i,j]==2):
-                vecinFata=gradient[i+1,j+1]
-                vecinSpate=gradient[i-1,j-1]
+            elif(directia[y,x]==2):
+                vecinFata=gradient[y+1,x+1]
+                vecinSpate=gradient[y-1,x-1]
             #verticala
-            elif(directia[i,j]==3):
-                vecinFata=gradient[i+1,j]
-                vecinSpate=gradient[i-1,j]
+            elif(directia[y,x]==4):
+                vecinFata=gradient[y+1,x]
+                vecinSpate=gradient[y-1,x]
             #digonala stanga
-            elif(directia[i,j]==4):
-                vecinFata=gradient[i-1,j+1]
-                vecinSpate=gradient[i+1,j-1]
-            if(gradient[i,j]>vecinSpate and gradient[i,j]>vecinFata):
-                conturImage[i,j]=gradient[i,j]
+            elif(directia[y,x]==3):
+                vecinFata=gradient[y-1,x+1]
+                vecinSpate=gradient[y+1,x-1]
+            if(gradient[y,x]>vecinSpate and gradient[y,x]>vecinFata):
+                conturImage[y,x]=gradient[y,x]
             else:
-                conturImage[i,j]=0
+                conturImage[y,x]=0
     return conturImage
 
 def detDirection(degree):
     degree=degree*180/np.pi
     degree[degree<0]+=180
+    #numele matricilor este dat de directia pe care se verifica maximul
+    #conturul avand defapt directi opusa
     horizontal=np.where(np.logical_or(np.logical_and(0<=degree,degree<22.5),np.logical_and(157.5<=degree,degree<=180.5)),1,0)
     diagonalRight=np.where(np.logical_and(22.5<=degree,degree<67.5),2,0)
-    diagonalLeft=np.where(np.logical_and(67.5<=degree,degree<112.5),4,0)
-    vertical=np.where(np.logical_and(degree>=112.5,degree<157.5),3,0)
+    vertical=np.where(np.logical_and(67.5<=degree,degree<112.5),4,0)
+    diagonalLeft=np.where(np.logical_and(degree>=112.5,degree<157.5),3,0)
     result=np.add(np.add(np.add(horizontal,diagonalLeft),diagonalRight),vertical)
     print(result.max(),result.min())
     return result
