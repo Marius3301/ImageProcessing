@@ -22,16 +22,16 @@ def closing(image,threshold,w,h):
         h+=1
     else:
         hBoard=int((h-1)/2)
-    image=boardingImage(image,w,h)
-    imagineDilatat=np.zeros((image.shape[0],image.shape[1]))
+    imagineDilatat = np.zeros((image.shape[0], image.shape[1]))
+    image=boardingImage(image,wBoard,hBoard)
     mask=np.ones((h,w))
-    for y in range(hBoard,image.shape[0]-hBoard):
-        for x in range(wBoard,image.shape[1]-wBoard):
-            imagineDilatat[y,x]=np.max(image[y-hBoard:y+hBoard+1,x-wBoard:x+wBoard+1]*mask)
+    for y in range(image.shape[0]-(2*hBoard)):
+        for x in range(image.shape[1]-(2*wBoard)):
+            imagineDilatat[y,x]=np.max(image[y:y+h,x:x+w]*mask)
     imagineErodata=np.zeros((imagineDilatat.shape[0],imagineDilatat.shape[1]))
-    for y in range(hBoard,image.shape[0]-hBoard):
-        for x in range(wBoard,image.shape[1]-wBoard):
-            imagineErodata[y,x]=np.min(imagineDilatat[y-hBoard:y+hBoard+1,x-wBoard:x+wBoard+1]*mask)
+    for y in range(imagineDilatat.shape[0]-(2*hBoard)):
+        for x in range(imagineDilatat.shape[1]-(2*wBoard)):
+            imagineErodata[y,x]=np.min(imagineDilatat[y:y+h,x:x+w]*mask)
     return{
         'processedImage':imagineErodata.astype('uint8')
     }
