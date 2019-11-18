@@ -10,6 +10,7 @@ from scipy import ndimage
 @OutputDialog(title="Binarization Output")
 
 def closing(image,threshold,w,h):
+    """when it comes to images we have shape[0]==line==height==y and the oposite for width"""
     image=thresholding(image,threshold)
     if w%2==0:
         wBoard=int(w/2)
@@ -22,15 +23,15 @@ def closing(image,threshold,w,h):
     else:
         hBoard=int((h-1)/2)
     image=boardingImage(image,w,h)
-    imagineDilatat=np.zeros((image.shape[1],image.shape[0]))
-    mask=np.ones((w,h))
-    for y in range(w-1,image.shape[1]):
-        for x in range(h-1,image.shape[0]):
-            imagineDilatat[y,x]=np.max(image[y-wBoard:y+wBoard+1,x-hBoard:x+hBoard+1]*mask)
-    imagineErodata=np.zeros((imagineDilatat.shape[1],imagineDilatat.shape[0]))
-    for y in range(w,image.shape[0]):
-        for x in range(h,image.shape[1]):
-            imagineErodata[y,x]=np.min(imagineDilatat[abs(y-wBoard):y+wBoard+1,abs(x-hBoard):x+hBoard+1]*mask)
+    imagineDilatat=np.zeros((image.shape[0],image.shape[1]))
+    mask=np.ones((h,w))
+    for y in range(hBoard,image.shape[0]-hBoard):
+        for x in range(wBoard,image.shape[1]-wBoard):
+            imagineDilatat[y,x]=np.max(image[y-hBoard:y+hBoard+1,x-wBoard:x+wBoard+1]*mask)
+    imagineErodata=np.zeros((imagineDilatat.shape[0],imagineDilatat.shape[1]))
+    for y in range(hBoard,image.shape[0]-hBoard):
+        for x in range(wBoard,image.shape[1]-wBoard):
+            imagineErodata[y,x]=np.min(imagineDilatat[y-hBoard:y+hBoard+1,x-wBoard:x+wBoard+1]*mask)
     return{
         'processedImage':imagineErodata.astype('uint8')
     }
