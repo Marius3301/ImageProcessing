@@ -12,8 +12,8 @@ import cv2
 #@OutputDialog(title="Binarization Output")
 
 def canny(image,tMin,tMax):
-    fx=np.array([[-1,0,1],[-2,0,2],[-1,0,1]])
-    fy=np.array([[-1,-2,-1],[0,0,0],[1,2,1]])
+    fx=np.array([[-1,0,1],[-2,0,2],[-1,0,1]],dtype='float')
+    fy=np.array([[-1,-2,-1],[0,0,0],[1,2,1]],dtype='float')
     image=ndimage.gaussian_filter(image,1)
     #image = filtruGauss(image, 1)
     #print(fx)
@@ -21,13 +21,17 @@ def canny(image,tMin,tMax):
     image=np.array(image,dtype='float')
     maskafx=ndimage.filters.convolve(image,fx,mode='constant',cval=0.0)
     maskafy=ndimage.filters.convolve(image,fy, mode='constant', cval=0.0)
-
+    #maskafx=calculMaska(image,fx)
+    #maskafy=calculMaska(image,fy)
     gradient=np.hypot(maskafx,maskafy)
-    print(maskafx[39,560],maskafy[39,560])
+    maskafx[maskafx==0]=1
+    #maskafy[maskafy==0]=1
     grade=np.arctan2(maskafy,maskafx)
-    print(gradient[39,560])
-    directia=detDirection(grade)
+    directia=detDirection2(grade)
+    #gradient[gradient < 80] += 20
+    #directia*=50
     imagineSubtiata=subtiere(gradient,directia)
+
     imagineSubtiata = np.where(imagineSubtiata >= tMax, 255, imagineSubtiata)
     imagineSubtiata = np.where(imagineSubtiata < tMin, 0, imagineSubtiata)
     sus_jos=np.array(imagineSubtiata).astype('uint8')
@@ -43,6 +47,12 @@ def canny(image,tMin,tMax):
     return {
         'processedImage': imagine.astype('uint8')
     }
+def calculMaska(imagine,maska):
+    resultat=np.zeros((imagine.shape[0],imagine.shape[1]))
+    for y in range(1,imagine.shape[0]-1):
+        for x in range(1,imagine.shape[1]-1):
+            resultat[y,x]=np.sum(imagine[y-1:y+2,x-1:x+2]*maska)
+    return resultat
 
 def parcurgereSJ(imagine,tMin,tMax):
     for i in range(imagine.shape[0] - 1):
@@ -112,68 +122,21 @@ def parcurgereJS(imagine,tMin,tMax):
                     imagine[i, j] = 0
     return imagine
 
-def hister(imagineSubtiata,tMax):
-    Q=queue.Queue()
-    Q.put([0,0])
-    Visited=[]
-    while not Q.empty():
-        flag=False
-        i,j=Q.get()
-        if (imagineSubtiata[i - 1, j + 1] > tMax and not (i,j) in Visited):
-            imagineSubtiata[i, j] = 255
-            flag=True
-        elif (imagineSubtiata[i - 1, j - 1] > tMax and not (i,j) in Visited):
-            imagineSubtiata[i, j] = 255
-            flag = True
-        elif (imagineSubtiata[i - 1, j] > tMax and not (i,j) in Visited):
-            imagineSubtiata[i, j] = 255
-            flag = True
-        elif (imagineSubtiata[i, j - 1] > tMax and not (i,j) in Visited):
-            imagineSubtiata[i, j] = 255
-            flag = True
-        elif(imagineSubtiata[i, j + 1] > tMax and not (i,j) in Visited) :
-            imagineSubtiata[i, j] = 255
-            flag = True
-        elif(imagineSubtiata[i + 1, j - 1] > tMax and not (i,j) in Visited) :
-            imagineSubtiata[i, j] = 255
-            flag = True
-        elif(imagineSubtiata[i + 1, j] > tMax and not (i,j) in Visited) :
-            imagineSubtiata[i, j] = 255
-            flag = True
-        elif(imagineSubtiata[i + 1, j + 1] > tMax and not (i,j) in Visited):
-            imagineSubtiata[i, j] = 255
-            flag = True
-        else:
-            imagineSubtiata[i, j] = 0
-        if(flag==True):
-            if(i+1<imagineSubtiata.shape[0] and j+1<imagineSubtiata.shape[1]):
-                Q.put([i + 1, j + 1])
-                Q.put([i + 1, j])
-                Q.put([i, j + 1])
-            if (i + 1 < imagineSubtiata.shape[0] and j - 1 >=0 ):
-                Q.put([i + 1, j - 1])
-                Q.put([i, j - 1])
-            if (i - 1 >=0 and j - 1 >= 0):
-                Q.put([i - 1, j])
-                Q.put([i - 1, j - 1])
-                Q.put([i - 1, j + 1])
-            Visited.append((i,j))
-    return  imagineSubtiata
 
 def subtiere(gradient,directia):
     conturImage=np.zeros((gradient.shape[0],gradient.shape[1]))
     maskaOrizontala=np.ones(5).reshape((5,1))
     maskaOrizontala=np.ones(5).reshape((1,5))
     maskaDiagonalaDreapta=np.array([[],[],[],[],[]])
-    for y in range(gradient.shape[0]-1):
-        for x in range (gradient.shape[1]-1):
-            #vecinSpate = 255
-            #vecinFata = 255
+    for y in range(1,gradient.shape[0]-1):
+        for x in range (1,gradient.shape[1]-1):
+            vecinSpate = 255
+            vecinFata = 255
             #orizontal
             if (directia[y,x]==1):
                 vecinFata=gradient[y,x-1]
                 vecinSpate=gradient[y,x+1]
-            #digonala dreapta
+            #135
             elif(directia[y,x]==2):
                 vecinFata=gradient[y+1,x+1]
                 vecinSpate=gradient[y-1,x-1]
@@ -181,11 +144,49 @@ def subtiere(gradient,directia):
             elif(directia[y,x]==4):
                 vecinFata=gradient[y+1,x]
                 vecinSpate=gradient[y-1,x]
-            #digonala stanga
+            #45
             elif(directia[y,x]==3):
                 vecinFata=gradient[y-1,x+1]
                 vecinSpate=gradient[y+1,x-1]
-            if(gradient[y,x]>vecinSpate and gradient[y,x]>vecinFata):
+            if(gradient[y,x]>=vecinSpate) and (gradient[y,x]>=vecinFata):
+                conturImage[y,x]=gradient[y,x]
+            else:
+                conturImage[y,x]=0
+    return conturImage
+
+def subtiereMaska5(gradient,directia):
+    conturImage=np.zeros((gradient.shape[0],gradient.shape[1]))
+    for y in range(2,gradient.shape[0]-2):
+        for x in range (2,gradient.shape[1]-2):
+            vecinSpate = 255
+            vecinFata = 255
+            vecinSpate2 = 255
+            vecinFata2 = 255
+            #orizontal
+            if (directia[y,x]==1):
+                vecinFata=gradient[y,x-1]
+                vecinFata2=gradient[y,x-2]
+                vecinSpate=gradient[y,x+1]
+                vecinSpate2=gradient[y,x+2]
+            #45
+            elif(directia[y,x]==2):
+                vecinFata=gradient[y+1,x+1]
+                vecinSpate=gradient[y-1,x-1]
+                vecinFata2=gradient[y+2,x+2]
+                vecinSpate2=gradient[y-2,x-2]
+            #verticala
+            elif(directia[y,x]==4):
+                vecinFata=gradient[y+1,x]
+                vecinSpate=gradient[y-1,x]
+                vecinFata2=gradient[y+2,x]
+                vecinSpate2=gradient[y-2,x]
+            #135
+            elif(directia[y,x]==3):
+                vecinFata=gradient[y-1,x+1]
+                vecinSpate=gradient[y+1,x-1]
+                vecinFata2=gradient[y-2,x+2]
+                vecinSpate2=gradient[y+2,x-2]
+            if(gradient[y,x]>vecinSpate and gradient[y,x]>vecinFata and gradient[y,x]>vecinFata2 and gradient[y,x]>vecinSpate2):
                 conturImage[y,x]=gradient[y,x]
             else:
                 conturImage[y,x]=0
@@ -194,14 +195,40 @@ def subtiere(gradient,directia):
 def detDirection(degree):
     degree=degree*180/np.pi
     degree[degree<0]+=180
+    degree=np.round(degree,1)
     #numele matricilor este dat de directia pe care se verifica maximul
     #conturul avand defapt directi opusa
-    horizontal=np.where(np.logical_or(np.logical_and(0<=degree,degree<22.5),np.logical_and(157.5<=degree,degree<=180.5)),1,0)
+    horizontal=np.where(np.logical_or(np.logical_and(0<=degree,degree<22.5),np.logical_and(157.5<=degree,degree<=180.0)),1,0)
     diagonalRight=np.where(np.logical_and(22.5<=degree,degree<67.5),2,0)
     vertical=np.where(np.logical_and(67.5<=degree,degree<112.5),4,0)
     diagonalLeft=np.where(np.logical_and(degree>=112.5,degree<157.5),3,0)
     result=np.add(np.add(np.add(horizontal,diagonalLeft),diagonalRight),vertical)
     print(result.max(),result.min())
+    return result
+
+def detDirection2(degree):
+    degree=degree*180/np.pi
+    print(np.round(degree,1))
+    degree=np.round(degree,1)
+    print(degree.max(),degree.min())
+    #numele matricilor este dat de directia pe care se verifica maximul
+    #conturul avand defapt directi opusa
+    horizontal=np.where(np.logical_or(np.logical_and(degree<22.5,degree>=-22.5),np.logical_or(degree<-157.5,degree>=157.5)),1,0)
+    diagonal135=np.where(np.logical_or(np.logical_and(degree<-22.5 ,degree>=-67.5),np.logical_and(degree>=112.5,degree<157.5)),3,0)
+    vertical=np.where(np.logical_or(np.logical_and(degree<-67.5 , degree>=-112.5),np.logical_and(degree>=67.5 ,degree<112.5)),4,0)
+    diagonal45=np.where(np.logical_or(np.logical_and(degree<-112.5 , degree>=-157.5),np.logical_and(degree>=22.5 , degree<67.5)),2,0)
+    result=np.add(np.add(np.add(horizontal,diagonal45),diagonal135),vertical)
+    print(result.max(),result.min())
+    return result
+
+def detDirectieArcTan(degree):
+    degree = degree * 180 / np.pi
+    horizontal=np.where(np.logical_and(-22.5<=degree,degree<22.5),1,0)
+    diagonalRight=np.where(np.logical_and(22.5<=degree,degree<=67.5),2,0)
+    vertical=np.where(np.logical_or(np.logical_and(-90.0<=degree,degree<-67.5),np.logical_and(67.5<degree,degree<=90.0)),4,0)
+    diagonalLeft=np.where(np.logical_and(-67.5<=degree,degree<=-22.5),3,0)
+    result=horizontal+vertical+diagonalLeft+diagonalRight
+    print(result.max(), result.min())
     return result
 
 
